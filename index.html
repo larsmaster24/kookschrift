@@ -28,6 +28,10 @@
   --f-serif:'Literata','Iowan Old Style','Palatino Linotype',Georgia,serif;
   --f-sans:'Karla',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
   --f-num:'Spline Sans Mono',ui-monospace,'SF Mono',Menlo,monospace;
+  --ease-enter:cubic-bezier(.34,1.4,.5,1);
+  --ease-exit:cubic-bezier(.4,0,1,1);
+  --ease-ui:cubic-bezier(.2,.8,.3,1);
+  --dur-fast:140ms;--dur-ui:200ms;--dur-enter:460ms;
 }
 
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -151,7 +155,7 @@ h1,h2{font-family:var(--f-serif);font-weight:560;font-optical-sizing:auto;text-w
   box-shadow:0 1px 2px rgba(38,25,22,.05), 0 12px 26px -16px rgba(38,25,22,.42);
   transition:transform .16s cubic-bezier(.22,1,.36,1);
 }
-.r-item:has(.r-open:active){transform:scale(.987)}
+.r-item:has(.r-open:active){transform:scale(.975)}
 .r-banner{
   width:100%;height:184px;
   background:var(--tint,rgba(51,38,47,.06)) center/cover no-repeat;
@@ -241,11 +245,12 @@ h1,h2{font-family:var(--f-serif);font-weight:560;font-optical-sizing:auto;text-w
 .stepper button:hover{background:var(--paper-raised)}
 .stepper button .ic{width:17px;height:17px}
 .stepper span{
-  min-width:44px;display:grid;place-items:center;
+  min-width:44px;display:grid;place-items:center;overflow:hidden;
   font-family:var(--f-num);font-weight:600;font-size:.98rem;
   font-variant-numeric:tabular-nums;
   border-inline:1px solid var(--line);
 }
+.stepper .num i{display:block;font:inherit;font-style:normal;font-variant-numeric:tabular-nums}
 
 .btn-cook{
   width:100%;margin:18px 0 10px;min-height:52px;
@@ -373,7 +378,7 @@ h1,h2{font-family:var(--f-serif);font-weight:560;font-optical-sizing:auto;text-w
 }
 .grp ul{list-style:none}
 .grp li{
-  display:flex;align-items:center;gap:12px;
+  display:flex;align-items:center;gap:12px;min-height:44px;
   padding:11px 0;border-bottom:1px solid var(--line-soft);
 }
 .grp .ck{
@@ -383,9 +388,12 @@ h1,h2{font-family:var(--f-serif);font-weight:560;font-optical-sizing:auto;text-w
 }
 .grp .ck .ic{width:14px;height:14px}
 .grp li.done .ck{background:var(--garden);border-color:var(--garden)}
-.ci-name{flex:1;text-align:left;font-size:.9rem}
-.grp li.done .ci-name{color:var(--ink-soft);text-decoration:line-through;text-decoration-color:color-mix(in srgb,var(--ink) 32%,transparent)}
-.ci-q{flex:none;font-family:var(--f-num);font-size:.76rem;color:var(--ink-soft);font-variant-numeric:tabular-nums}
+.ci-name{flex:1;text-align:left;font-size:.9rem;position:relative}
+.ci-name .strike{position:absolute;left:0;top:52%;height:1px;width:0;background:color-mix(in srgb,var(--ink) 45%,transparent);transition:width .2s var(--ease-ui) 80ms}
+.grp li.done .ci-name .strike{width:100%}
+.grp li.done .ci-name{color:var(--ink-soft);transition:color .2s var(--ease-ui)}
+.ci-q{flex:none;font-family:var(--f-num);font-size:.76rem;color:var(--ink-soft);font-variant-numeric:tabular-nums;transition:opacity .2s var(--ease-ui)}
+.grp li.done .ci-q{opacity:.5}
 .ci-x{flex:none;width:30px;height:30px;display:grid;place-items:center;color:color-mix(in srgb,var(--ink) 40%,transparent);border-radius:8px}
 .ci-x:hover{color:var(--brick)}
 .ci-x .ic{width:15px;height:15px}
@@ -433,10 +441,11 @@ h1,h2{font-family:var(--f-serif);font-weight:560;font-optical-sizing:auto;text-w
 }
 .cook-progress{display:flex;gap:3px;padding:0 16px 2px}
 .cook-progress .seg{
-  flex:1;height:3px;border-radius:2px;
+  flex:1;height:3px;border-radius:2px;transform-origin:center;
   background:color-mix(in srgb,var(--ink) 12%,transparent);
   transition:background-color .3s ease;transition-delay:calc(var(--i,0) * 45ms);
 }
+.cook-progress .seg:not(.on){transition-duration:.16s}
 .cook-progress .seg.on{background:var(--saffron)}
 
 .cook-timerbar{display:flex;flex-direction:column;gap:7px;padding:10px 16px 2px}
@@ -498,7 +507,7 @@ h1,h2{font-family:var(--f-serif);font-weight:560;font-optical-sizing:auto;text-w
 }
 .cnav .ic{width:18px;height:18px}
 .cnav:disabled{opacity:.4;cursor:default}
-.cnav:not(:disabled):active{transform:translateY(1px)}
+.cnav:not(:disabled):active{transform:scale(.96);transition:transform .12s var(--ease-ui)}
 .cnav-primary{flex:1.5;background:var(--ink);color:var(--paper);border-color:var(--ink)}
 .cnav-done{flex:1.5;background:var(--garden);color:#20281a;border-color:var(--garden)}
 
@@ -517,19 +526,53 @@ h1,h2{font-family:var(--f-serif);font-weight:560;font-optical-sizing:auto;text-w
 /* ---------- motion ---------- */
 @media (prefers-reduced-motion: no-preference){
   .cook:not([hidden]) .cook-inner{animation:cookRise .44s cubic-bezier(.16,.84,.28,1) both}
+
+  /* 01 - stap -> volgende stap */
   .cook-step-wrap[data-anim="next"],
   .cook-step-wrap[data-anim="prev"],
-  .cook-step-wrap[data-anim="enter"]{animation:stepIn .42s cubic-bezier(.16,.84,.28,1) both}
+  .cook-step-wrap[data-anim="enter"]{animation:stepIn .46s var(--ease-enter) both}
   .cook-step-wrap[data-anim="next"]{--fx:30px}
   .cook-step-wrap[data-anim="prev"]{--fx:-30px}
   .cook-step-wrap[data-anim="enter"]{--fx:0;--fy:14px}
-  .tchip{animation:chipIn .3s ease both}
+  .cook-step-wrap[data-anim="next"] .cook-timers .btn-timer,
+  .cook-step-wrap[data-anim="prev"] .cook-timers .btn-timer,
+  .cook-step-wrap[data-anim="enter"] .cook-timers .btn-timer{animation:stepIn .4s var(--ease-enter) both;animation-delay:120ms}
+
+  /* 02 - voortgangsbalk: alleen het nieuwste segment popt */
+  .cook-progress .seg.pop{animation:segPop .34s var(--ease-enter) both}
+
+  /* 03 - recept openen: fotobanner zet zich, content staggert omhoog */
+  .detail.d-open .d-hero{animation:heroSet .52s var(--ease-enter) both}
+  .detail.d-open > .d-name{animation:riseIn .5s var(--ease-enter) both;animation-delay:70ms}
+  .detail.d-open > .d-meta{animation:riseIn .5s var(--ease-enter) both;animation-delay:110ms}
+  .detail.d-open > .d-portions{animation:riseIn .5s var(--ease-enter) both;animation-delay:150ms}
+  .detail.d-open > .btn-cook{animation:riseIn .5s var(--ease-enter) both;animation-delay:190ms}
+
+  /* 04 - porties schuiven: cijfer rolt, hoeveelheden flitsen saffraan */
+  .d-portions[data-roll] .stepper .num i{animation:roll .26s var(--ease-enter) both}
+  .ing-q.flash{animation:qFlash .42s var(--ease-ui) both;animation-delay:calc(var(--i,0) * 26ms)}
+
+  /* 05 - afvinken: vakje veert, vinkje tekent, streep loopt door */
+  .grp li.just .ck{animation:boxPop .28s var(--ease-enter) both}
+  .grp li.just .ck svg *{animation:draw .22s var(--ease-ui) both}
+
+  .tchip.is-new{animation:chipIn .3s ease both}
   .tchip.is-done{animation:chipDone 1.1s ease}
   .cook-flash{animation:flashIn .5s cubic-bezier(.16,.84,.28,1) both}
   .flash-mark{animation:markPop .5s cubic-bezier(.22,1,.36,1) both}
 }
+.d-portions[data-roll="down"] .stepper .num i{--ry:-100%}
+.grp li.just .ck svg{overflow:visible}
+.grp li.just .ck svg *{stroke-dasharray:26}
 @keyframes cookRise{from{opacity:0;transform:translateY(12px);filter:blur(6px)}to{opacity:1;transform:none;filter:blur(0)}}
-@keyframes stepIn{from{opacity:0;filter:blur(5px);transform:translate(var(--fx,0),var(--fy,0))}to{opacity:1;filter:blur(0);transform:none}}
+@keyframes stepIn{from{opacity:0;filter:blur(5px);transform:translate(var(--fx,0),var(--fy,0)) scale(.985)}to{opacity:1;filter:blur(0);transform:none}}
+@keyframes segPop{0%{transform:scaleY(1)}38%{transform:scaleY(2.6)}100%{transform:scaleY(1)}}
+@keyframes heroSet{from{opacity:0;transform:translateY(-10px) scale(1.09);filter:blur(4px)}to{opacity:1;transform:none;filter:blur(0)}}
+@keyframes riseIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@keyframes roll{from{opacity:0;transform:translateY(var(--ry,100%))}to{opacity:1;transform:none}}
+@keyframes qFlash{0%{color:var(--saffron);transform:translateY(-3px)}100%{color:var(--ink-soft);transform:none}}
+@keyframes boxPop{0%{transform:scale(1)}40%{transform:scale(1.22)}100%{transform:scale(1)}}
+@keyframes draw{from{stroke-dashoffset:26}to{stroke-dashoffset:0}}
 @keyframes chipIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
 @keyframes chipDone{0%,100%{box-shadow:0 0 0 0 transparent}30%{box-shadow:0 0 0 4px color-mix(in srgb,var(--saffron) 30%,transparent)}}
 @keyframes flashIn{from{opacity:0}to{opacity:1}}
@@ -540,6 +583,17 @@ h1,h2{font-family:var(--f-serif);font-weight:560;font-optical-sizing:auto;text-w
   .cook-step-wrap[data-anim="prev"],
   .cook-step-wrap[data-anim="enter"]{animation:fade .14s both}
   .cook:not([hidden]) .cook-inner{animation:fade .14s both}
+  .detail.d-open .d-hero,
+  .detail.d-open > .d-name,
+  .detail.d-open > .d-meta,
+  .detail.d-open > .d-portions,
+  .detail.d-open > .btn-cook,
+  .d-portions[data-roll] .stepper .num i{animation:fade .14s both}
+  .cook-progress .seg.pop,
+  .grp li.just .ck,
+  .grp li.just .ck svg *{animation:none}
+  .ing-q.flash{animation:none}
+  .ci-name .strike{transition-duration:0s}
 }
 @keyframes fade{from{opacity:0}to{opacity:1}}
 </style>
@@ -816,6 +870,7 @@ var S = {
   recepten:SEED.slice(), cart:[], portions:{},
   form:blankForm(),
   cooking:null, step:0, stepDir:'enter', peek:false, finishFlash:false,
+  fx:null,
   timers:[]
 };
 function blankForm(){ return {naam:'',tijd:'',porties:'',cat:'',ingr:'',stappen:'',notitie:'',foto:''}; }
@@ -1001,12 +1056,13 @@ function detailHTML(){
 
   var missing = r.ingredienten.filter(function(i){ return !cartFind(i[0]); }).length;
   var freshMissing = r.ingredienten.filter(function(i){ return isFreshBuy(i) && !cartFind(i[0]); }).length;
-  var ings = r.ingredienten.map(function(i){
+  var flashQ = S.fx && S.fx.type === 'portions';
+  var ings = r.ingredienten.map(function(i, idx){
     var on = !!cartFind(i[0]);
     return '<li><button class="ing' + (on ? ' on' : '') + '" data-action="toggle-ing" data-name="' + esc(i[0]) + '" data-hoev="' + esc(hoev(i, f)) + '" aria-pressed="' + on + '">' +
       '<span class="tick">' + (on ? icon('check') : '') + '</span>' +
       '<span class="ing-name">' + esc(i[0]) + '</span>' +
-      '<span class="ing-q">' + esc(hoev(i, f)) + '</span>' +
+      '<span class="ing-q' + (flashQ ? ' flash' : '') + '" style="--i:' + idx + '">' + esc(hoev(i, f)) + '</span>' +
     '</button></li>';
   }).join('');
 
@@ -1014,7 +1070,7 @@ function detailHTML(){
     return '<li><span class="s-n">' + (i+1) + '</span><span>' + esc(s) + '</span></li>';
   }).join('');
 
-  return '<div class="detail">' +
+  return '<div class="detail' + (S.fx && S.fx.type === 'openRecipe' ? ' d-open' : '') + '">' +
     '<div class="d-herowrap' + (r.foto ? ' has-photo' : '') + '">' +
       '<div class="d-hero' + (r.foto ? ' has-photo' : '') + '" style="' + (r.foto ? 'background-image:url(\'' + esc(r.foto) + '\')' : '--tint:' + tint(r.categorie)) + '">' + plate(r.naam.charAt(0), 'transparent', true) + '</div>' +
       (r.foto
@@ -1025,9 +1081,9 @@ function detailHTML(){
     '<h1 class="d-name">' + esc(r.naam) + '</h1>' +
     '<p class="d-meta">' + (r.categorie ? esc(r.categorie) + ' &middot; ' : '') + r.tijd + ' min &middot; ' + cp + ' porties</p>' +
 
-    '<div class="d-portions"><span>Porties</span><div class="stepper">' +
+    '<div class="d-portions"' + (S.fx && S.fx.type === 'portions' ? ' data-roll="' + S.fx.dir + '"' : '') + '><span>Porties</span><div class="stepper">' +
       '<button data-action="portion-dec" aria-label="Minder porties">' + icon('minus') + '</button>' +
-      '<span>' + cp + '</span>' +
+      '<span class="num"><i>' + cp + '</i></span>' +
       '<button data-action="portion-inc" aria-label="Meer porties">' + icon('plus') + '</button>' +
     '</div></div>' +
 
@@ -1090,9 +1146,10 @@ function lijstHTML(){
 
   var body = groups.length ? groups.map(function(g){
     return '<section class="grp"><h2>' + esc(g.naam) + '</h2><ul>' + g.items.map(function(it){
-      return '<li class="' + (it.af ? 'done' : '') + '">' +
+      var just = it.af && S.fx && S.fx.type === 'check' && S.fx.id === it.id ? ' just' : '';
+      return '<li class="' + (it.af ? 'done' : '') + just + '">' +
         '<button class="ck" data-action="cart-toggle" data-id="' + it.id + '" aria-pressed="' + it.af + '" aria-label="' + (it.af ? 'Terugzetten op de lijst' : 'Afvinken') + '">' + (it.af ? icon('check') : '') + '</button>' +
-        '<button class="ci-name" data-action="cart-toggle" data-id="' + it.id + '">' + esc(it.naam) + '</button>' +
+        '<button class="ci-name" data-action="cart-toggle" data-id="' + it.id + '">' + esc(it.naam) + '<span class="strike"></span></button>' +
         '<span class="ci-q">' + esc(it.hoeveelheid) + '</span>' +
         '<button class="ci-x" data-action="cart-remove" data-id="' + it.id + '" aria-label="Verwijderen">' + icon('x') + '</button>' +
       '</li>';
@@ -1135,7 +1192,8 @@ function cookHTML(){
   var cp = curPortions(r), f = cp / r.porties;
 
   var segs = r.stappen.map(function(_, k){
-    return '<span class="seg' + (k <= i ? ' on' : '') + '" style="--i:' + k + '"></span>';
+    var pop = S.fx && S.fx.type === 'segPop' && S.fx.i === k ? ' pop' : '';
+    return '<span class="seg' + (k <= i ? ' on' : '') + pop + '" style="--i:' + k + '"></span>';
   }).join('');
 
   var timerBtns = durs.map(function(d){
@@ -1203,10 +1261,14 @@ function render(){
       if (ss != null && 'setSelectionRange' in el){ try{ el.setSelectionRange(ss, se); }catch(e){} }
     }
   }
+
+  S.fx = null;
 }
 
 function chipHTML(t){
-  return '<div class="tchip ' + (t.done ? 'is-done' : (t.running ? '' : 'is-paused')) + '" data-tid="' + t.id + '">' +
+  var cls = t.done ? 'is-done' : (t.running ? '' : 'is-paused');
+  if (!seenTimers[t.id]) cls += ' is-new';
+  return '<div class="tchip ' + cls + '" data-tid="' + t.id + '">' +
     '<button class="tt-toggle" data-action="timer-toggle" data-id="' + t.id + '" aria-label="' + (t.done ? 'Timer klaar' : (t.running ? 'Pauzeren' : 'Hervatten')) + '">' +
       (t.done ? icon('check') : (t.running ? icon('pause') : icon('play'))) + '</button>' +
     '<span class="tt-time">' + (t.done ? 'Klaar' : mmss(t.remaining)) + '</span>' +
@@ -1234,9 +1296,11 @@ function renderTimerTray(){
       if (tg) tg.innerHTML = t.done ? icon('check') : (t.running ? icon('pause') : icon('play'));
     });
   }
+  S.timers.forEach(function(t){ seenTimers[t.id] = 1; });
 }
 
 /* ---------------- timers ---------------- */
+var seenTimers = {};
 var ticker = null;
 function ensureTicker(){
   if (ticker) return;
@@ -1325,6 +1389,7 @@ function handle(action, el){
       break;
     case 'open-recipe':
       S.activeId = id; S.screen = 'detail'; S.tab = 'recepten';
+      S.fx = { type:'openRecipe' };
       queueScrollTop();
       break;
     case 'back-list':
@@ -1399,7 +1464,11 @@ function handle(action, el){
       var rp = recipeById(S.activeId);
       if (!rp) break;
       var cur = curPortions(rp);
-      S.portions[rp.id] = action === 'portion-inc' ? Math.min(20, cur + 1) : Math.max(1, cur - 1);
+      var next = action === 'portion-inc' ? Math.min(20, cur + 1) : Math.max(1, cur - 1);
+      if (next !== cur){
+        S.portions[rp.id] = next;
+        S.fx = { type:'portions', dir: action === 'portion-inc' ? 'up' : 'down' };
+      }
       break;
     }
     case 'toggle-ing': {
@@ -1434,6 +1503,7 @@ function handle(action, el){
     }
     case 'cart-toggle':
       S.cart = S.cart.map(function(c){ return c.id === id ? Object.assign({}, c, { af: !c.af }) : c; });
+      S.fx = { type:'check', id: id };
       persist();
       break;
     case 'cart-remove':
@@ -1468,7 +1538,7 @@ function handle(action, el){
       break;
     case 'cook-next': {
       var rn = recipeById(S.cooking.recipeId);
-      if (rn && S.step < rn.stappen.length - 1){ S.step++; S.stepDir = 'next'; }
+      if (rn && S.step < rn.stappen.length - 1){ S.step++; S.stepDir = 'next'; S.fx = { type:'segPop', i: S.step }; }
       break;
     }
     case 'cook-finish':
