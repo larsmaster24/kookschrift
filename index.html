@@ -363,18 +363,43 @@ h1,h2{font-family:var(--f-serif);font-weight:560;font-optical-sizing:auto;text-w
 .shake{animation:shake .38s ease}
 
 /* ---------- shopping list ---------- */
-.los{display:flex;gap:9px;margin:8px 0 20px}
+.los-wrap{margin:8px 0 20px}
+.los{display:flex;gap:9px;margin:0}
+.los.los-solo{margin:16px 0 18px}
 .los input{
   flex:1;padding:11px 13px;border-radius:12px;
   background:var(--paper-raised);border:1px solid var(--line-soft);
   outline:none;font-size:.9rem;
 }
 .los input:focus{border-color:var(--saffron-ink)}
-.los button{
+.los button.los-go{
   flex:none;width:46px;border-radius:12px;background:var(--ink);color:var(--paper);
   display:grid;place-items:center;
 }
+.los button.los-more{
+  flex:none;width:42px;border-radius:12px;border:1px solid var(--line);
+  color:var(--ink-soft);display:grid;place-items:center;
+  transition:transform .2s var(--ease-ui),color .14s ease,border-color .14s ease;
+}
+.los button.los-more.on{transform:rotate(180deg);color:var(--ink);border-color:color-mix(in srgb,var(--ink) 25%,transparent)}
 .los button .ic{width:18px;height:18px}
+.los-extra{display:flex;gap:9px;margin-top:9px}
+.los-extra input{
+  flex:1;min-width:0;padding:10px 13px;border-radius:12px;
+  background:var(--paper-raised);border:1px solid var(--line-soft);
+  outline:none;font-size:.88rem;
+}
+.los-extra input:focus{border-color:var(--saffron-ink)}
+.los-extra select{
+  flex:none;max-width:47%;padding:10px 10px;border-radius:12px;
+  background:var(--paper-raised);border:1px solid var(--line-soft);
+  outline:none;font-size:.84rem;color:var(--ink);font-family:inherit;
+}
+.los-extra select:focus{border-color:var(--saffron-ink)}
+.pantry-intro{font-size:.84rem;color:var(--ink-soft);line-height:1.5;margin:6px 0 4px;text-wrap:pretty}
+.pantry-list{list-style:none;display:flex;flex-direction:column}
+.pantry-list li{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line-soft)}
+.pi-name{flex:1;font-size:.9rem}
 .grp{margin-bottom:22px}
 .grp h2{
   font-family:var(--f-sans);font-weight:700;font-size:.7rem;
@@ -676,11 +701,12 @@ var STAPLES = ['olie','olijfolie','zonnebloemolie','peper en zout','zout en pepe
   'knoflookpoeder','bloem','paneermeel','suiker','azijn','mosterd','dijonmosterd','honing','bouillon',
   'bouillonblokje','groentebouillon','kippenbouillon','sesamzaad','pijnboompitten','zonnebloempitten'];
 function isStaple(naam){
+  var list = (S && S.pantry) ? S.pantry : STAPLES;
   var n = (naam || '').toLowerCase().trim();
-  if (STAPLES.indexOf(n) !== -1) return true;
+  if (list.indexOf(n) !== -1) return true;
   var words = n.split(/[\s,]+/);
-  for (var i = 0; i < STAPLES.length; i++){
-    var s = STAPLES[i];
+  for (var i = 0; i < list.length; i++){
+    var s = list[i];
     if (s.indexOf(' ') === -1 && words.indexOf(s) !== -1) return true;
   }
   return false;
@@ -917,12 +943,14 @@ var S = {
   form:blankForm(),
   cooking:null, step:0, stepDir:'enter', peek:false, finishFlash:false,
   fx:null, spiek:null,
+  pantry:STAPLES.slice(), pantryView:false, pantryInput:'',
+  losOpen:false, losQty:'', losCat:'',
   timers:[]
 };
 function blankForm(){ return {naam:'',tijd:'',porties:'',cat:'',ingr:'',stappen:'',notitie:'',foto:''}; }
 
 function persist(){
-  try{ localStorage.setItem(KEY, JSON.stringify({recepten:S.recepten, cart:S.cart})); }catch(e){}
+  try{ localStorage.setItem(KEY, JSON.stringify({recepten:S.recepten, cart:S.cart, pantry:S.pantry})); }catch(e){}
 }
 (function load(){
   try{
@@ -944,6 +972,7 @@ function persist(){
       S.recepten = merged;
     }
     S.cart = raw.cart || [];
+    if (raw.pantry != null) S.pantry = raw.pantry;
   }catch(e){}
 })();
 
@@ -1086,10 +1115,15 @@ function visibleRecipes(){
 
 function headHTML(){
   var left = '', title = '', meta = '', right = '';
-  if (S.tab === 'lijst'){
+  if (S.tab === 'lijst' && S.pantryView){
+    left = '<button class="head-back" data-action="pantry-close">' + icon('back') + 'Boodschappen</button>';
+    title = 'Voorraadkast';
+    meta = S.pantry.length + (S.pantry.length === 1 ? ' item' : ' items');
+  } else if (S.tab === 'lijst'){
     var teHalen = S.cart.filter(function(c){ return !c.af; }).length;
     title = 'Boodschappen';
     meta = S.cart.length ? (teHalen + ' te halen') : 'nog niets op de lijst';
+    left = '<button class="head-back" data-action="pantry-open">' + icon('basket') + 'Voorraadkast</button>';
     if (S.cart.length) right = '<button class="head-new head-clear" data-action="cart-clear-all">' + icon('trash') + 'Alles wissen</button>';
   } else if (S.tab === 'spieken'){
     if (S.spiek){
@@ -1156,7 +1190,7 @@ function detailHTML(){
   if (!r) { S.screen = 'list'; return listHTML(); }
   var cp = curPortions(r), f = cp / r.porties;
 
-  var missing = r.ingredienten.filter(function(i){ return !cartFind(i[0]); }).length;
+  var missing = r.ingredienten.filter(function(i){ return !cartFind(i[0]) && !isStaple(i[0]); }).length;
   var freshMissing = r.ingredienten.filter(function(i){ return isFreshBuy(i) && !cartFind(i[0]); }).length;
   var flashQ = S.fx && S.fx.type === 'portions';
   var justIng = S.fx && S.fx.type === 'ing' ? S.fx.name : null;
@@ -1260,16 +1294,42 @@ function lijstHTML(){
     }).join('') + '</ul></section>';
   }).join('') : '<div class="empty">' + icon('basket') + '<p>Je lijst is nog leeg. Open een recept en tik ingredi&euml;nten aan, of typ hierboven zelf iets in.</p></div>';
 
-  return '<form class="los" autocomplete="off">' +
-      '<input id="los" data-focus-key="los" placeholder="Zelf iets toevoegen" value="' + esc(S.los) + '">' +
-      '<button type="button" data-action="los-add" aria-label="Toevoegen">' + icon('plus') + '</button>' +
-    '</form>' + body +
+  var catOpts = '<option value="">Categorie: automatisch</option>' +
+    CAT_ORDER.map(function(c){ return '<option value="' + esc(c) + '"' + (S.losCat === c ? ' selected' : '') + '>' + esc(c) + '</option>'; }).join('');
+  return '<div class="los-wrap">' +
+      '<form class="los" autocomplete="off">' +
+        '<input id="los" data-focus-key="los" placeholder="Zelf iets toevoegen" value="' + esc(S.los) + '">' +
+        '<button type="button" class="los-more' + (S.losOpen ? ' on' : '') + '" data-action="los-toggle" aria-label="Meer opties" aria-expanded="' + S.losOpen + '">' + icon('cdown') + '</button>' +
+        '<button type="button" class="los-go" data-action="los-add" aria-label="Toevoegen">' + icon('plus') + '</button>' +
+      '</form>' +
+      (S.losOpen
+        ? '<div class="los-extra">' +
+            '<input id="los-qty" data-focus-key="los-qty" placeholder="Hoeveelheid (bijv. 500 g)" value="' + esc(S.losQty) + '">' +
+            '<select id="los-cat" aria-label="Categorie">' + catOpts + '</select>' +
+          '</div>'
+        : '') +
+    '</div>' + body +
     (anyDone ? '<button class="btn-sec wide" data-action="cart-clear-done">Afgevinkte items wissen</button>' : '');
+}
+
+function pantryHTML(){
+  var items = S.pantry.slice().sort(function(a, b){ return a.localeCompare(b, 'nl'); });
+  var rows = items.length
+    ? '<ul class="pantry-list">' + items.map(function(nm){
+        return '<li><span class="pi-name">' + esc(nm) + '</span>' +
+          '<button class="ci-x" data-action="pantry-remove" data-name="' + esc(nm) + '" aria-label="Uit voorraadkast halen">' + icon('x') + '</button></li>';
+      }).join('') + '</ul>'
+    : '<div class="empty">' + icon('basket') + '<p>Je voorraadkast is leeg. Alles wat op een recept staat komt dan gewoon op de boodschappenlijst.</p></div>';
+  return '<p class="pantry-intro">Wat hier staat sla je over bij <strong>Zet alles op de lijst</strong> en <strong>Alleen de verse boodschappen</strong> &mdash; spullen die je toch altijd in huis hebt.</p>' +
+    '<form class="los los-solo" autocomplete="off">' +
+      '<input id="pantry-in" data-focus-key="pantry-in" placeholder="Toevoegen, bijv. olijfolie" value="' + esc(S.pantryInput) + '">' +
+      '<button type="button" class="los-go" data-action="pantry-add" aria-label="Toevoegen">' + icon('plus') + '</button>' +
+    '</form>' + rows;
 }
 
 function appHTML(){
   var screen;
-  if (S.tab === 'lijst') screen = lijstHTML();
+  if (S.tab === 'lijst') screen = S.pantryView ? pantryHTML() : lijstHTML();
   else if (S.tab === 'spieken') screen = spiekenHTML();
   else if (S.screen === 'detail') screen = detailHTML();
   else if (S.screen === 'form') screen = formHTML();
@@ -1599,7 +1659,7 @@ function handle(action, el){
       if (!ra) break;
       var fa = curPortions(ra) / ra.porties, added = 0;
       ra.ingredienten.forEach(function(i){
-        if (!cartFind(i[0])){ addIngredientToCart(i[0], hoev(i, fa), catVoor(i[0])); added++; }
+        if (!cartFind(i[0]) && !isStaple(i[0])){ addIngredientToCart(i[0], hoev(i, fa), catVoor(i[0])); added++; }
       });
       persist();
       if (added){ S.tab = 'lijst'; S.fx = { type:'basket' }; announce(added + ' ingrediënten toegevoegd aan je boodschappenlijst.'); }
@@ -1636,11 +1696,32 @@ function handle(action, el){
       S.cart = S.cart.filter(function(c){ return !c.af; });
       persist();
       break;
+    case 'los-toggle':
+      S.losOpen = !S.losOpen;
+      break;
+    case 'pantry-open':
+      S.pantryView = true; queueScrollTop();
+      break;
+    case 'pantry-close':
+      S.pantryView = false; queueScrollTop();
+      break;
+    case 'pantry-add': {
+      var pn = (S.pantryInput || '').trim().toLowerCase();
+      if (!pn){ var pin = document.getElementById('pantry-in'); if (pin) pin.focus(); return; }
+      if (S.pantry.indexOf(pn) === -1) S.pantry = S.pantry.concat([pn]);
+      S.pantryInput = '';
+      persist();
+      break;
+    }
+    case 'pantry-remove':
+      S.pantry = S.pantry.filter(function(x){ return x !== el.dataset.name; });
+      persist();
+      break;
     case 'los-add': {
       var nm2 = S.los.trim();
       if (!nm2) { var li = document.getElementById('los'); if (li) li.focus(); return; }
-      addIngredientToCart(nm2, '', catVoor(nm2));
-      S.los = '';
+      addIngredientToCart(nm2, (S.losQty || '').trim(), S.losCat || catVoor(nm2));
+      S.los = ''; S.losQty = '';
       S.fx = { type:'basket' };
       persist();
       break;
@@ -1789,7 +1870,7 @@ function resolveRecipeSeg(seg){
 
 function hashForState(){
   if (S.tab === 'spieken') return S.spiek ? '#spieken/' + S.spiek : '#spieken';
-  if (S.tab === 'lijst') return '#lijst';
+  if (S.tab === 'lijst') return S.pantryView ? '#voorraadkast' : '#lijst';
   if (S.screen === 'form') return S.editingId
     ? '#recept/' + recipeSlug(recipeById(S.editingId)) + '/bewerk'
     : '#nieuw';
@@ -1814,7 +1895,8 @@ function applyRoute(){
   var parts = location.hash.replace(/^#/, '').split('/').filter(Boolean);
   var head = (parts[0] || '').toLowerCase();
 
-  if (head === 'lijst'){ S.tab = 'lijst'; return; }
+  if (head === 'lijst'){ S.tab = 'lijst'; S.pantryView = false; return; }
+  if (head === 'voorraadkast'){ S.tab = 'lijst'; S.pantryView = true; return; }
   if (head === 'spieken'){
     S.tab = 'spieken';
     S.spiek = parts[1] && SPIEK.some(function(s){ return s.key === parts[1]; }) ? parts[1] : null;
@@ -1873,7 +1955,13 @@ document.addEventListener('input', function(e){
   var t = e.target;
   if (t.id === 'q'){ S.query = t.value; render(); return; }
   if (t.id === 'los'){ S.los = t.value; return; }
+  if (t.id === 'los-qty'){ S.losQty = t.value; return; }
+  if (t.id === 'pantry-in'){ S.pantryInput = t.value; return; }
   if (t.dataset && t.dataset.field){ S.form[t.dataset.field] = t.value; return; }
+});
+
+document.addEventListener('change', function(e){
+  if (e.target.id === 'los-cat'){ S.losCat = e.target.value; }
 });
 
 document.addEventListener('keydown', function(e){
@@ -1881,6 +1969,18 @@ document.addEventListener('keydown', function(e){
     e.preventDefault();
     var b = document.querySelector('[data-action="los-add"]');
     if (b) handle('los-add', b);
+    return;
+  }
+  if (e.target.id === 'pantry-in' && e.key === 'Enter'){
+    e.preventDefault();
+    var pb = document.querySelector('[data-action="pantry-add"]');
+    if (pb) handle('pantry-add', pb);
+    return;
+  }
+  if (e.target.id === 'los-qty' && e.key === 'Enter'){
+    e.preventDefault();
+    var lb = document.querySelector('[data-action="los-add"]');
+    if (lb) handle('los-add', lb);
     return;
   }
   if (!S.cooking) return;
