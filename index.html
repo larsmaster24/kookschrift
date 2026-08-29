@@ -1530,6 +1530,100 @@ document.getElementById('photoInput').addEventListener('change', function(e){
   });
 });
 
+/* ---------------- routing: elk recept een eigen link ---------------- */
+/* Routes (hash-based, werkt op GitHub Pages en als los bestand):
+     #recepten                       receptenlijst
+     #lijst                          boodschappenlijst
+     #nieuw                          nieuw recept
+     #recept/<id>-<slug>             recept-detail  (deelbare link)
+     #recept/<id>-<slug>/bewerk      recept bewerken
+   De <slug> is puur cosmetisch; matchen gebeurt op het id ervoor,
+   dus een link blijft werken ook als het recept later hernoemd wordt. */
+function slugify(s){
+  return String(s == null ? '' : s).toLowerCase()
+    .replace(/[à-å]/g,'a').replace(/[è-ë]/g,'e')
+    .replace(/[ì-ï]/g,'i').replace(/[ò-ö]/g,'o')
+    .replace(/[ù-ü]/g,'u').replace(/ç/g,'c').replace(/ñ/g,'n')
+    .replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'');
+}
+function recipeSlug(r){
+  var s = r ? slugify(r.naam) : '';
+  return (r ? r.id : '') + (s ? '-' + s : '');
+}
+function resolveRecipeSeg(seg){
+  seg = decodeURIComponent(seg || '');
+  return recipeById(seg)
+    || recipeById(seg.split('-')[0])
+    || S.recepten.filter(function(r){ return slugify(r.naam) === seg.replace(/^[^-]+-/, ''); })[0]
+    || null;
+}
+
+function hashForState(){
+  if (S.tab === 'lijst') return '#lijst';
+  if (S.screen === 'form') return S.editingId
+    ? '#recept/' + recipeSlug(recipeById(S.editingId)) + '/bewerk'
+    : '#nieuw';
+  if (S.screen === 'detail'){
+    var rd = recipeById(S.activeId);
+    if (rd) return '#recept/' + recipeSlug(rd);
+  }
+  return '#recepten';
+}
+
+var _hashLock = false;
+function syncHash(){
+  var want = hashForState(), cur = location.hash;
+  if (cur === want) return;
+  if (want === '#recepten' && (cur === '' || cur === '#')) return; // eerste load schoon laten
+  _hashLock = true;
+  try { location.hash = want; } catch(e){}
+  setTimeout(function(){ _hashLock = false; }, 0);
+}
+
+function applyRoute(){
+  var parts = location.hash.replace(/^#/, '').split('/').filter(Boolean);
+  var head = (parts[0] || '').toLowerCase();
+
+  if (head === 'lijst'){ S.tab = 'lijst'; return; }
+  S.tab = 'recepten';
+
+  if (head === 'nieuw'){
+    if (!(S.screen === 'form' && !S.editingId)){ S.form = blankForm(); S.editingId = null; }
+    S.screen = 'form';
+    return;
+  }
+
+  if (head === 'recept' && parts[1]){
+    var r = resolveRecipeSeg(parts[1]);
+    if (r){
+      if ((parts[2] || '').toLowerCase() === 'bewerk'){
+        if (S.editingId !== r.id){
+          S.editingId = r.id;
+          S.form = {
+            naam:r.naam, tijd:String(r.tijd), porties:String(r.porties), cat:r.categorie,
+            ingr:ingredientenNaarRegels(r.ingredienten), stappen:r.stappen.join('\n'),
+            notitie:r.notitie || '', foto:r.foto || ''
+          };
+        }
+        S.screen = 'form';
+      } else {
+        S.activeId = r.id; S.screen = 'detail';
+      }
+      return;
+    }
+  }
+
+  // leeg / onbekend / recept niet gevonden -> terug naar de lijst
+  S.screen = 'list'; S.activeId = null; S.editingId = null;
+}
+
+window.addEventListener('hashchange', function(){
+  if (_hashLock){ _hashLock = false; return; }
+  applyRoute();
+  queueScrollTop();
+  render();
+});
+
 /* ---------------- events ---------------- */
 document.addEventListener('click', function(e){
   var el = e.target.closest('[data-action]');
@@ -1576,6 +1670,7 @@ document.addEventListener('toggle', function(e){
 var _render = render;
 render = function(){
   _render();
+  syncHash();
   if (S.cooking) S.stepDir = '';
   if (pendingScrollTop){
     pendingScrollTop = false;
@@ -1584,6 +1679,7 @@ render = function(){
   }
 };
 
+applyRoute();
 render();
 })();
 </script>
