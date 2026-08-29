@@ -403,6 +403,32 @@ h1,h2{font-family:var(--f-serif);font-weight:560;font-optical-sizing:auto;text-w
 .ci-x:hover{color:var(--brick)}
 .ci-x .ic{width:15px;height:15px}
 
+/* ---------- spieken ---------- */
+.spiek-list{display:flex;flex-direction:column;gap:10px}
+.spiek-group-h{font-family:var(--f-sans);font-weight:700;font-size:.7rem;letter-spacing:.15em;text-transform:uppercase;color:var(--ink-soft);margin:18px 0 2px}
+.spiek-group-h:first-child{margin-top:2px}
+.spiek-item{display:flex;flex-direction:column;gap:3px;width:100%;text-align:left;padding:14px 15px;border:1px solid var(--line);border-radius:14px;background:var(--paper-raised);transition:border-color .14s ease,transform .12s var(--ease-ui)}
+.spiek-item:hover{border-color:color-mix(in srgb,var(--ink) 22%,transparent)}
+.spiek-item:active{transform:scale(.985)}
+.spiek-item .st{font-family:var(--f-serif);font-weight:560;font-size:1.02rem;color:var(--ink)}
+.spiek-item .ss{font-size:.8rem;color:var(--ink-soft);line-height:1.4;text-wrap:pretty}
+.spiek-card{display:flex;flex-direction:column}
+.spiek-body{font-size:.92rem;line-height:1.62;color:var(--ink);text-wrap:pretty}
+.spiek-body h3{font-family:var(--f-serif);font-weight:560;font-size:1.06rem;margin:20px 0 2px;color:var(--ink)}
+.spiek-body h3:first-child{margin-top:0}
+.spiek-body p{margin:6px 0}
+.spiek-body ol,.spiek-body ul{margin:8px 0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+.spiek-body li{padding-left:3px}
+.spiek-body strong{font-weight:600}
+.spiek-body .let-op{margin:14px 0 4px;padding:11px 13px;border-radius:12px;background:color-mix(in srgb,var(--saffron) 10%,transparent);border:1px solid color-mix(in srgb,var(--saffron) 30%,var(--line));font-size:.86rem;line-height:1.5}
+.spiek-tbl{overflow-x:auto;margin:10px 0;border:1px solid var(--line);border-radius:12px}
+.spiek-tbl table{width:100%;border-collapse:collapse;font-size:.84rem}
+.spiek-tbl th,.spiek-tbl td{text-align:left;padding:8px 11px;border-bottom:1px solid var(--line-soft);vertical-align:top}
+.spiek-tbl thead th{font-family:var(--f-sans);font-weight:700;font-size:.66rem;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft);background:var(--paper-raised)}
+.spiek-tbl tr:last-child td{border-bottom:none}
+.spiek-tbl td:first-child{font-weight:560}
+.spiek-tbl td.n{font-family:var(--f-num);font-variant-numeric:tabular-nums;white-space:nowrap}
+
 /* ---------- tab bar ---------- */
 .tabbar{flex:none;display:flex;border-top:1px solid var(--line);background:var(--paper);padding-bottom:env(safe-area-inset-bottom)}
 .tabbar button{
@@ -890,7 +916,7 @@ var S = {
   recepten:SEED.slice(), cart:[], portions:{},
   form:blankForm(),
   cooking:null, step:0, stepDir:'enter', peek:false, finishFlash:false,
-  fx:null,
+  fx:null, spiek:null,
   timers:[]
 };
 function blankForm(){ return {naam:'',tijd:'',porties:'',cat:'',ingr:'',stappen:'',notitie:'',foto:''}; }
@@ -988,7 +1014,9 @@ function icon(name){
     basket:'<path d="M5.5 9.5h13l-1.2 8.3A2 2 0 0 1 15.3 19.5H8.7a2 2 0 0 1-2-1.7z"/><line x1="9.6" y1="4.5" x2="8" y2="9.5"/><line x1="14.4" y1="4.5" x2="16" y2="9.5"/><line x1="3.5" y1="9.5" x2="20.5" y2="9.5"/>',
     play:'<polygon points="8 5 19 12 8 19"/>',
     pause:'<rect x="7" y="5" width="3.4" height="14" rx="0.7"/><rect x="13.6" y="5" width="3.4" height="14" rx="0.7"/>',
-    image:'<rect x="3" y="5" width="18" height="14" rx="2.2"/><circle cx="8.5" cy="10" r="1.7"/><path d="M20.5 15.5L16 11l-8.5 8"/>'
+    image:'<rect x="3" y="5" width="18" height="14" rx="2.2"/><circle cx="8.5" cy="10" r="1.7"/><path d="M20.5 15.5L16 11l-8.5 8"/>',
+    bulb:'<path d="M12 3a6 6 0 0 0-3.8 10.7c.5.4.85 1 .95 1.6l.15.9h5.4l.15-.9c.1-.6.45-1.2.95-1.6A6 6 0 0 0 12 3z"/><line x1="9.5" y1="19.5" x2="14.5" y2="19.5"/><line x1="10.5" y1="21.7" x2="13.5" y2="21.7"/>',
+    dice:'<rect x="4" y="4" width="16" height="16" rx="3.4"/><circle cx="9" cy="9" r="1.35" fill="currentColor" stroke="none"/><circle cx="15" cy="9" r="1.35" fill="currentColor" stroke="none"/><circle cx="9" cy="15" r="1.35" fill="currentColor" stroke="none"/><circle cx="15" cy="15" r="1.35" fill="currentColor" stroke="none"/>'
   };
   var filled = name === 'play' || name === 'pause';
   return '<svg class="ic" viewBox="0 0 24 24" fill="' + (filled?'currentColor':'none') + '" stroke="' + (filled?'none':'currentColor') +
@@ -998,6 +1026,49 @@ function plate(letter, tintv, big){
   return '<span class="plate' + (big?' plate-lg':'') + '" style="--tint:' + tintv + '">' +
     '<svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="45"/><circle cx="50" cy="50" r="33"/></svg>' +
     '<span>' + esc(letter) + '</span></span>';
+}
+
+/* ---------------- spieken (techniek & tabellen) ---------------- */
+var SPIEK = [
+  { key:'t-risotto', groep:'Techniek', titel:'Risottomethode', sub:'Toasten, blussen, bouillon in scheuten, mantecare.',
+    body:"<h3>Verhouding</h3><p>Reken ongeveer <strong>75 g risottorijst per persoon</strong> en 3 à 4 delen bouillon op 1 deel rijst. Houd de bouillon apart, tegen de kook aan.</p><h3>Werkwijze</h3><ol><li>Fruit fijngesneden ui of sjalot zacht in boter met een scheutje olie.</li><li>Voeg de rijst toe en roer 1 tot 2 minuten tot de korrels glazig zien (toasten).</li><li>Blus met een scheut droge witte wijn en laat die volledig intrekken.</li><li>Voeg nu telkens één soeplepel hete bouillon toe. Roer rustig tot het vocht bijna weg is en herhaal, ongeveer 18 minuten, tot de rijst beetgaar is met een romige kern.</li><li>Van het vuur: een klont koude boter en geraspte Parmezaan erdoor kloppen, deksel erop, 2 minuten laten rusten (mantecare).</li><li>Losser maken met een laatste scheut bouillon: op het bord hoort de risotto licht te golven.</li></ol><p class='let-op'>Blijf roeren zodat het zetmeel vrijkomt, dat maakt hem romig. Koude bouillon stopt de garing, dus houd hem heet.</p>" },
+  { key:'t-bechamel', groep:'Techniek', titel:'Bechamelsaus', sub:'Roux 1-1-10, garde erbij, flinke rasp nootmuskaat.',
+    body:"<h3>Basisverhouding</h3><p>Voor ongeveer 4 personen: <strong>50 g boter, 50 g bloem, 500 ml melk</strong>. Voor een stevige lasagnesaus 60 g boter en 60 g bloem.</p><h3>Werkwijze</h3><ol><li>Smelt de boter, roer de bloem erdoor en gaar deze roux 2 minuten zonder te laten kleuren.</li><li>Voeg de melk in scheuten toe en klop met een garde tot het elke keer glad is.</li><li>Breng aan de kook en laat 3 tot 5 minuten zachtjes doorkoken tot de saus de bolle kant van een lepel bedekt.</li><li>Breng op smaak met zout, peper en een flinke rasp nootmuskaat.</li></ol><h3>Kaassaus</h3><p>Van het vuur 75 g geraspte kaas erdoor roeren tot die gesmolten is.</p><p class='let-op'>Klontjes? Doorkloppen of even zeven. Te dik: scheutje melk. Te dun: een paar minuten langer koken.</p>" },
+  { key:'t-rijst', groep:'Techniek', titel:'Rijst koken', sub:'Absorptie 1 : 1½, deksel dicht, laten stomen.',
+    body:"<h3>Absorptiemethode (basmati, jasmijn)</h3><p>Verhouding <strong>1 deel rijst : 1½ deel water</strong>. Spoel de rijst tot het spoelwater helder is.</p><ol><li>Breng water met een snuf zout aan de kook en doe de rijst erbij.</li><li>Deksel erop, laagste vuur, 10 tot 12 minuten.</li><li>Vuur uit en 5 tot 10 minuten met deksel laten staan. Luchtig maken met een vork.</li></ol><h3>Andere soorten</h3><ul><li>Zilvervliesrijst: 1 : 2, ongeveer 25 tot 30 minuten.</li><li>Ruime methode (als pasta): veel kokend gezouten water, 10 tot 12 minuten, afgieten.</li></ul><p class='let-op'>Til de deksel niet op tijdens het garen. Eén maatbeker ongekookte rijst is ongeveer 3 porties.</p>" },
+  { key:'t-ei', groep:'Techniek', titel:'Ei koken', sub:'Van 6 minuten vloeibaar tot 12 minuten hard.',
+    body:"<h3>Vanaf hernieuwd koken</h3><p>Laat eieren uit de koelkast voorzichtig in kokend water zakken en tel vanaf het moment dat het water weer kookt.</p><div class='spiek-tbl'><table><thead><tr><th>Tijd</th><th>Resultaat</th></tr></thead><tbody><tr><td class='n'>6 min</td><td>vloeibare dooier</td></tr><tr><td class='n'>7 min</td><td>smeuïg, zachte dooier</td></tr><tr><td class='n'>8 min</td><td>dooier net gestold, nog oranje</td></tr><tr><td class='n'>10 min</td><td>hard, dooier smeuïg-vast</td></tr><tr><td class='n'>12 min</td><td>helemaal hard</td></tr></tbody></table></div><p class='let-op'>Direct in ijswater leggen: dan pellen ze makkelijker en gaart de dooier niet door. Oudere eieren pellen makkelijker dan verse.</p>" },
+  { key:'t-pasta', groep:'Techniek', titel:'Pasta koken', sub:'Zeewater, beetgaar, kookwater bewaren.',
+    body:"<h3>Water en zout</h3><p>Per 100 g pasta: <strong>1 liter water en 7 tot 10 g zout</strong>. Het water mag naar zee smaken. Geen olie in het water.</p><h3>Werkwijze</h3><ol><li>Kook onafgedekt op hoog vuur en roer de eerste minuut zodat niets plakt.</li><li>Kooktijd van het pak min 1 minuut geeft beetgaar.</li><li>Schep vóór het afgieten een kop kookwater apart. Dat zetmeelwater bindt straks de saus.</li><li>Pasta niet spoelen. Meng hem 1 minuut in de pan met de saus en een scheut kookwater.</li></ol>" },
+  { key:'t-bouillon', groep:'Techniek', titel:'Bouillon trekken', sub:'Trekken niet koken, niet zouten, ontvetten.',
+    body:"<h3>Groentebouillon</h3><p>Ui, wortel, prei, bleekselderij, knoflook, peterseliesteel, laurier en peperkorrels. 45 tot 60 minuten tegen de kook aan trekken, niet hard koken, anders wordt hij troebel.</p><h3>Kip en rund</h3><ul><li>Kip: karkas of pootjes met koud water opzetten, tegen de kook aan brengen, schuim afscheppen, 2 tot 3 uur.</li><li>Rund: 3 tot 4 uur. Rooster de botten eerst voor kleur en smaak.</li></ul><p class='let-op'>Niet zouten tijdens het trekken, je kookt bouillon vaak nog in. Zeef, koel af en schep het vet eraf. Houdbaar 3 dagen, of invriezen in porties.</p>" },
+  { key:'t-deeg', groep:'Techniek', titel:'Pizza- & bakdeeg', sub:'Pizzadeeg en de vuistregel voor brood.',
+    body:"<h3>Pizzadeeg (2 bollen)</h3><p><strong>300 g bloem (type 00), 190 ml lauw water, 6 g zout, 3 g gist, 1 el olijfolie.</strong></p><ol><li>Kneed 10 minuten tot een soepele, elastische bol.</li><li>Laten rijzen: 1½ tot 2 uur op kamertemperatuur, of 24 tot 48 uur in de koelkast voor meer smaak.</li><li>Bollen vormen en 30 minuten narijzen.</li><li>Oven zo heet mogelijk, 250 tot 275°C, met een steen of omgekeerde bakplaat.</li></ol><h3>Vuistregel brood</h3><p>In gram: <strong>bloem 100 : water 65 : zout 2 : gist 1</strong>.</p><p class='let-op'>Leg gist niet direct op het zout. Het deeg is klaar als je er een dun vliesje van kunt trekken zonder dat het scheurt.</p>" },
+  { key:'t-vlees', groep:'Techniek', titel:'Vlees aanbraden & rusten', sub:'Aanbraden, kerntemperaturen, laten rusten.',
+    body:"<h3>Aanbraden</h3><ol><li>Dep het vlees kurkdroog. Zout het vlak voor het bakken, of ruim 40 minuten van tevoren.</li><li>Pan écht heet, dunne laag olie met een hoog rookpunt.</li><li>Leg het vlees erin en laat het los-bakken, niet porren of te vroeg draaien.</li></ol><h3>Kerntemperatuur</h3><p>Haal het vlees er 2 tot 3°C vóór van het vuur, de temperatuur loopt nog op.</p><div class='spiek-tbl'><table><thead><tr><th>Vlees</th><th>°C</th></tr></thead><tbody><tr><td>Rund rare</td><td class='n'>50</td></tr><tr><td>Rund medium-rare</td><td class='n'>54</td></tr><tr><td>Rund medium</td><td class='n'>58</td></tr><tr><td>Rund doorbakken</td><td class='n'>68</td></tr><tr><td>Varken</td><td class='n'>62</td></tr><tr><td>Kip en gevogelte</td><td class='n'>74</td></tr><tr><td>Gehakt</td><td class='n'>70</td></tr></tbody></table></div><p class='let-op'>Laten rusten onder los folie, ongeveer de helft van de baktijd (steak 5 minuten, braadstuk 15 tot 20). Snijd tegen de draad in.</p>" },
+  { key:'omrekenen', groep:'Tabel', titel:'Omrekenen', sub:'Cups, oz, °F en cup-gewichten per ingredient.',
+    body:"<h3>Volume</h3><div class='spiek-tbl'><table><thead><tr><th>Amerikaans</th><th>Metrisch</th></tr></thead><tbody><tr><td>1 cup</td><td class='n'>240 ml</td></tr><tr><td>¾ cup</td><td class='n'>180 ml</td></tr><tr><td>⅔ cup</td><td class='n'>160 ml</td></tr><tr><td>½ cup</td><td class='n'>120 ml</td></tr><tr><td>⅓ cup</td><td class='n'>80 ml</td></tr><tr><td>¼ cup</td><td class='n'>60 ml</td></tr><tr><td>1 tbsp (el)</td><td class='n'>15 ml</td></tr><tr><td>1 tsp (tl)</td><td class='n'>5 ml</td></tr><tr><td>1 fl oz</td><td class='n'>30 ml</td></tr></tbody></table></div><h3>Droge waren — 1 cup weegt ongeveer</h3><div class='spiek-tbl'><table><tbody><tr><td>Bloem</td><td class='n'>125 g</td></tr><tr><td>Kristalsuiker</td><td class='n'>200 g</td></tr><tr><td>Basterdsuiker</td><td class='n'>220 g</td></tr><tr><td>Poedersuiker</td><td class='n'>120 g</td></tr><tr><td>Roomboter</td><td class='n'>227 g</td></tr><tr><td>Rijst (ongekookt)</td><td class='n'>195 g</td></tr><tr><td>Havermout</td><td class='n'>90 g</td></tr><tr><td>Cacaopoeder</td><td class='n'>100 g</td></tr><tr><td>Honing of stroop</td><td class='n'>340 g</td></tr><tr><td>Geraspte kaas</td><td class='n'>100 g</td></tr></tbody></table></div><h3>Gewicht</h3><div class='spiek-tbl'><table><tbody><tr><td>1 oz</td><td class='n'>28 g</td></tr><tr><td>1 lb</td><td class='n'>454 g</td></tr><tr><td>100 g</td><td class='n'>3,5 oz</td></tr></tbody></table></div><h3>Temperatuur</h3><p>°C = (°F − 32) × 5 ÷ 9. In het kort:</p><div class='spiek-tbl'><table><tbody><tr><td class='n'>325°F</td><td class='n'>160°C</td></tr><tr><td class='n'>350°F</td><td class='n'>175°C</td></tr><tr><td class='n'>375°F</td><td class='n'>190°C</td></tr><tr><td class='n'>400°F</td><td class='n'>200°C</td></tr><tr><td class='n'>425°F</td><td class='n'>220°C</td></tr><tr><td class='n'>450°F</td><td class='n'>230°C</td></tr></tbody></table></div><h3>Nederlandse lepels</h3><p>1 el = 15 ml · 1 tl = 5 ml · 1 kopje ≈ 125 ml · snufje ≈ ⅛ tl.</p>" },
+  { key:'oven', groep:'Tabel', titel:'Oventemperaturen', sub:'Gasstand, hetelucht en kerntemperaturen.',
+    body:"<h3>Gasstand, °C en hetelucht</h3><p>Hetelucht staat ongeveer 20°C lager ingesteld dan boven- en onderwarmte.</p><div class='spiek-tbl'><table><thead><tr><th>Stand</th><th>Boven/onder</th><th>Hetelucht</th></tr></thead><tbody><tr><td class='n'>1</td><td class='n'>140°C</td><td class='n'>120°C</td></tr><tr><td class='n'>2</td><td class='n'>150°C</td><td class='n'>130°C</td></tr><tr><td class='n'>3</td><td class='n'>165°C</td><td class='n'>145°C</td></tr><tr><td class='n'>4</td><td class='n'>180°C</td><td class='n'>160°C</td></tr><tr><td class='n'>5</td><td class='n'>190°C</td><td class='n'>170°C</td></tr><tr><td class='n'>6</td><td class='n'>200°C</td><td class='n'>180°C</td></tr><tr><td class='n'>7</td><td class='n'>220°C</td><td class='n'>200°C</td></tr><tr><td class='n'>8</td><td class='n'>230°C</td><td class='n'>210°C</td></tr><tr><td class='n'>9</td><td class='n'>245°C</td><td class='n'>225°C</td></tr></tbody></table></div><h3>Wat de termen betekenen</h3><div class='spiek-tbl'><table><tbody><tr><td>Zacht</td><td class='n'>120–150°C</td></tr><tr><td>Matig</td><td class='n'>160–180°C</td></tr><tr><td>Heet</td><td class='n'>190–220°C</td></tr><tr><td>Zeer heet</td><td class='n'>230–250°C</td></tr></tbody></table></div><h3>Kerntemperatuur</h3><div class='spiek-tbl'><table><tbody><tr><td>Rund rare / medium / door</td><td class='n'>50 / 58 / 68°C</td></tr><tr><td>Varken</td><td class='n'>62°C</td></tr><tr><td>Kip</td><td class='n'>74°C</td></tr><tr><td>Gehakt</td><td class='n'>70°C</td></tr><tr><td>Vis</td><td class='n'>50–55°C</td></tr></tbody></table></div><p class='let-op'>Een recept met boven-onderwarmte omzetten naar hetelucht? Stel ongeveer 20°C lager in, of houd dezelfde temperatuur aan en bak 10 tot 15% korter.</p>" },
+  { key:'vervangen', groep:'Tabel', titel:'Vervangingen', sub:'Ei, karnemelk, room, boter, wijn en meer.',
+    body:"<p>De hoeveelheid geldt steeds voor de linkerkolom.</p><div class='spiek-tbl'><table><thead><tr><th>In plaats van</th><th>Gebruik</th></tr></thead><tbody><tr><td>1 ei (in baksels)</td><td>60 g appelmoes, of ½ geprakte banaan, of 1 el gemalen lijnzaad + 3 el water (10 min laten staan)</td></tr><tr><td>1 ei (om te binden)</td><td>1 el maïzena losgeroerd in 2 el water</td></tr><tr><td>250 ml karnemelk</td><td>240 ml melk + 1 el citroensap of azijn, 10 min laten staan</td></tr><tr><td>250 ml slagroom (om mee te koken)</td><td>kookroom, of 240 ml volle melk + 2 el boter</td></tr><tr><td>100 g roomboter (bakken)</td><td>100 g margarine, of 80 ml neutrale olie</td></tr><tr><td>200 g zelfrijzend bakmeel</td><td>200 g bloem + 4 tl bakpoeder + snuf zout</td></tr><tr><td>1 tl bakpoeder</td><td>¼ tl baking soda + ½ tl citroensap of azijn</td></tr><tr><td>100 g crème fraîche</td><td>100 g volle yoghurt of zure room</td></tr><tr><td>250 g mascarpone</td><td>200 g roomkaas + 3 el slagroom</td></tr><tr><td>1 teen knoflook</td><td>⅛ tl knoflookpoeder</td></tr><tr><td>1 el verse kruiden</td><td>1 tl gedroogde kruiden</td></tr><tr><td>witte wijn (in een saus)</td><td>gelijke hoeveelheid bouillon + scheutje azijn of citroen</td></tr><tr><td>1 blik tomatenblokjes (400 g)</td><td>350 g passata + snuf suiker</td></tr><tr><td>1 sjalot</td><td>½ kleine ui + heel klein beetje knoflook</td></tr></tbody></table></div>" }
+];
+
+function spiekenHTML(){
+  if (S.spiek){
+    var c = null;
+    for (var i = 0; i < SPIEK.length; i++) if (SPIEK[i].key === S.spiek) c = SPIEK[i];
+    if (!c){ S.spiek = null; return spiekenHTML(); }
+    return '<div class="spiek-card"><div class="spiek-body">' + c.body + '</div></div>';
+  }
+  var groepen = [['Technieken', 'Techniek'], ['Tabellen', 'Tabel']];
+  return '<div class="spiek-list">' + groepen.map(function(g){
+    return '<div class="spiek-group-h">' + g[0] + '</div>' +
+      SPIEK.filter(function(s){ return s.groep === g[1]; }).map(function(s){
+        return '<button class="spiek-item" data-action="spiek-open" data-key="' + s.key + '">' +
+          '<span class="st">' + esc(s.titel) + '</span><span class="ss">' + esc(s.sub) + '</span></button>';
+      }).join('');
+  }).join('') + '</div>';
 }
 
 /* ---------------- views ---------------- */
@@ -1020,6 +1091,16 @@ function headHTML(){
     title = 'Boodschappen';
     meta = S.cart.length ? (teHalen + ' te halen') : 'nog niets op de lijst';
     if (S.cart.length) right = '<button class="head-new head-clear" data-action="cart-clear-all">' + icon('trash') + 'Alles wissen</button>';
+  } else if (S.tab === 'spieken'){
+    if (S.spiek){
+      var scard = null;
+      for (var sci = 0; sci < SPIEK.length; sci++) if (SPIEK[sci].key === S.spiek) scard = SPIEK[sci];
+      left = '<button class="head-back" data-action="spiek-back">' + icon('back') + 'Spieken</button>';
+      title = scard ? scard.titel : 'Spieken';
+    } else {
+      title = 'Spieken';
+      meta = 'techniek & keukentabellen';
+    }
   } else if (S.screen === 'detail'){
     left = '<button class="head-back" data-action="back-list">' + icon('back') + 'Recepten</button>';
   } else if (S.screen === 'form'){
@@ -1189,6 +1270,7 @@ function lijstHTML(){
 function appHTML(){
   var screen;
   if (S.tab === 'lijst') screen = lijstHTML();
+  else if (S.tab === 'spieken') screen = spiekenHTML();
   else if (S.screen === 'detail') screen = detailHTML();
   else if (S.screen === 'form') screen = formHTML();
   else screen = listHTML();
@@ -1203,6 +1285,7 @@ function appHTML(){
     '<nav class="tabbar">' +
       '<button data-action="tab" data-value="recepten" class="' + (S.tab === 'recepten' ? 'on' : '') + '" aria-current="' + (S.tab === 'recepten') + '">' + icon('book') + 'Recepten</button>' +
       '<button data-action="tab" data-value="lijst" class="' + (S.tab === 'lijst' ? 'on' : '') + (toBasket ? ' bump' : '') + '" aria-current="' + (S.tab === 'lijst') + '">' + icon('bag') + 'Boodschappen' + (badge ? '<span class="badge">' + badge + '</span>' : '') + '</button>' +
+      '<button data-action="tab" data-value="spieken" class="' + (S.tab === 'spieken' ? 'on' : '') + '" aria-current="' + (S.tab === 'spieken') + '">' + icon('bulb') + 'Spieken</button>' +
     '</nav>';
 }
 
@@ -1406,7 +1489,16 @@ function handle(action, el){
   switch (action){
     case 'tab':
       S.tab = el.dataset.value;
+      if (S.tab === 'spieken') S.spiek = null;
       if (S.tab === 'recepten' && S.screen === 'form') S.screen = 'list';
+      break;
+    case 'spiek-open':
+      S.spiek = el.dataset.key; S.tab = 'spieken';
+      queueScrollTop();
+      break;
+    case 'spiek-back':
+      S.spiek = null;
+      queueScrollTop();
       break;
     case 'filter':
       S.filter = el.dataset.value;
@@ -1696,6 +1788,7 @@ function resolveRecipeSeg(seg){
 }
 
 function hashForState(){
+  if (S.tab === 'spieken') return S.spiek ? '#spieken/' + S.spiek : '#spieken';
   if (S.tab === 'lijst') return '#lijst';
   if (S.screen === 'form') return S.editingId
     ? '#recept/' + recipeSlug(recipeById(S.editingId)) + '/bewerk'
@@ -1722,6 +1815,11 @@ function applyRoute(){
   var head = (parts[0] || '').toLowerCase();
 
   if (head === 'lijst'){ S.tab = 'lijst'; return; }
+  if (head === 'spieken'){
+    S.tab = 'spieken';
+    S.spiek = parts[1] && SPIEK.some(function(s){ return s.key === parts[1]; }) ? parts[1] : null;
+    return;
+  }
   S.tab = 'recepten';
 
   if (head === 'nieuw'){
