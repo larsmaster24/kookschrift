@@ -25,6 +25,10 @@ Of host het via GitHub Pages en open de gepubliceerde URL op je telefoon.
   Bakkerij). Afvinken, los toevoegen, afgevinkte wissen.
 - **Recept toevoegen/bewerken** — met een ingrediënt-parser (hoeveelheid + eenheid
   vooraan) en een fotokiezer per recept.
+- **Back-up (export/import)** — knoppen boven de receptenlijst zetten al je recepten,
+  je boodschappenlijst en favorieten om in één JSON-bestand, en zetten een eerder
+  geëxporteerd bestand terug. Handig voor een nieuwe telefoon of browser, of als
+  vangnet tegen een leeggegooide `localStorage`.
 
 ## Recepten aanpassen
 
