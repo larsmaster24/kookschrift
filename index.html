@@ -109,6 +109,9 @@ h1,h2{font-family:var(--f-serif);font-weight:560;font-optical-sizing:auto;text-w
 }
 .head-new:hover{background:var(--paper-raised);border-color:color-mix(in srgb,var(--ink) 22%,transparent)}
 .head-new .ic{width:16px;height:16px}
+.head-clear{color:var(--ink-soft)}
+.head-clear .ic{width:15px;height:15px}
+.head-clear:hover{color:var(--brick);background:color-mix(in srgb,var(--brick) 8%,transparent);border-color:color-mix(in srgb,var(--brick) 45%,var(--line))}
 
 .app-scroll{
   flex:1;
@@ -1016,6 +1019,7 @@ function headHTML(){
     var teHalen = S.cart.filter(function(c){ return !c.af; }).length;
     title = 'Boodschappen';
     meta = S.cart.length ? (teHalen + ' te halen') : 'nog niets op de lijst';
+    if (S.cart.length) right = '<button class="head-new head-clear" data-action="cart-clear-all">' + icon('trash') + 'Alles wissen</button>';
   } else if (S.screen === 'detail'){
     left = '<button class="head-back" data-action="back-list">' + icon('back') + 'Recepten</button>';
   } else if (S.screen === 'form'){
@@ -1528,6 +1532,12 @@ function handle(action, el){
       break;
     case 'cart-remove':
       S.cart = S.cart.filter(function(c){ return c.id !== id; });
+      persist();
+      break;
+    case 'cart-clear-all':
+      if (!S.cart.length) return;
+      if (!window.confirm('De hele boodschappenlijst wissen?')) return;
+      S.cart = [];
       persist();
       break;
     case 'cart-clear-done':
