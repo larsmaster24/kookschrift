@@ -10,42 +10,7 @@
 
 /* ---------- tokens ---------- */
 :root{
-  --paper:#f4ecdb;
-  --paper-raised:#fbf5e9;
-  --sheet:#fdf8ee;
-  --ink:#33262f;
-  --ink-soft:#6d5c66;
-  --line:#e2d5bd;
-  --line-soft:#ece1c9;
-  --saffron:#e2952f;
-  --saffron-ink:#a4611a;
-  --garden:#5f7052;
-  --garden-ink:#4a5a3e;
-  --brick:#a8422d;
-  --stage:radial-gradient(125% 85% at 50% -12%, #efe2c4 0%, #e6d6b4 55%, #dcc9a4 100%);
-  --device-shadow:0 34px 84px -24px rgba(48,32,26,.5), 0 10px 26px -10px rgba(48,32,26,.34);
-  --f-serif:'Newsreader','Iowan Old Style','Palatino Linotype',Georgia,serif;
-  --f-sans:'Karla',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
-}
-@media (prefers-color-scheme: dark){
-  :root:not([data-theme="light"]){
-    --paper:#231b21;
-    --paper-raised:#2c232a;
-    --sheet:#2f2530;
-    --ink:#efe5d4;
-    --ink-soft:#b1a294;
-    --line:#43343e;
-    --line-soft:#3a2d37;
-    --saffron:#f0ad4b;
-    --saffron-ink:#f0ad4b;
-    --garden:#a2bd8c;
-    --garden-ink:#a2bd8c;
-    --brick:#e0876e;
-    --stage:radial-gradient(125% 85% at 50% -12%, #2c2029 0%, #241c22 55%, #1c151b 100%);
-    --device-shadow:0 34px 90px -26px rgba(0,0,0,.66), 0 10px 26px -12px rgba(0,0,0,.5);
-  }
-}
-:root[data-theme="dark"]{
+  color-scheme:dark;
   --paper:#231b21;
   --paper-raised:#2c232a;
   --sheet:#2f2530;
@@ -60,6 +25,8 @@
   --brick:#e0876e;
   --stage:radial-gradient(125% 85% at 50% -12%, #2c2029 0%, #241c22 55%, #1c151b 100%);
   --device-shadow:0 34px 90px -26px rgba(0,0,0,.66), 0 10px 26px -12px rgba(0,0,0,.5);
+  --f-serif:'Newsreader','Iowan Old Style','Palatino Linotype',Georgia,serif;
+  --f-sans:'Karla',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
 }
 
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -326,6 +293,7 @@ h1,h2{font-family:var(--f-serif);font-weight:560;font-optical-sizing:auto;text-w
 .btn-wide .ic{width:16px;height:16px}
 .btn-wide:hover:not(:disabled){background:var(--paper-raised)}
 .btn-wide:disabled{color:var(--ink-soft);cursor:default}
+.btn-wide + .btn-wide{margin-top:8px}
 
 .d-h{
   font-family:var(--f-sans);font-weight:600;font-size:.72rem;
@@ -556,9 +524,7 @@ h1,h2{font-family:var(--f-serif);font-weight:560;font-optical-sizing:auto;text-w
 .cnav:disabled{opacity:.4;cursor:default}
 .cnav:not(:disabled):active{transform:translateY(1px)}
 .cnav-primary{flex:1.5;background:var(--ink);color:var(--paper);border-color:var(--ink)}
-.cnav-done{flex:1.5;background:var(--garden);color:#fff;border-color:var(--garden)}
-:root[data-theme="dark"] .cnav-done{color:#20281a}
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .cnav-done{color:#20281a}}
+.cnav-done{flex:1.5;background:var(--garden);color:#20281a;border-color:var(--garden)}
 
 .cook-flash{
   position:absolute;inset:0;z-index:5;
@@ -626,6 +592,24 @@ var CATS = [
   ['Bakkerij', ['brood','ciabatta','stokbrood','tortilla','wrap','naanbrood','pita','bol']]
 ];
 var CAT_ORDER = CATS.map(function(c){return c[0]}).concat(['Overig']);
+
+// dingen die je meestal in huis hebt: overgeslagen bij "Alleen de verse boodschappen"
+var STAPLES = ['olie','olijfolie','zonnebloemolie','peper en zout','zout en peper','zout','zwarte peper',
+  'oregano','tijm','verse tijm','rozemarijn','verse rozemarijn','laurier','komijn','kerrie','kerriepoeder',
+  'kurkuma','paprikapoeder','gerookt paprikapoeder','chilivlokken','nootmuskaat','kaneel','garam masala',
+  'knoflookpoeder','bloem','paneermeel','suiker','azijn','mosterd','dijonmosterd','honing','bouillon',
+  'bouillonblokje','groentebouillon','kippenbouillon','sesamzaad','pijnboompitten','zonnebloempitten'];
+function isStaple(naam){
+  var n = (naam || '').toLowerCase().trim();
+  if (STAPLES.indexOf(n) !== -1) return true;
+  var words = n.split(/[\s,]+/);
+  for (var i = 0; i < STAPLES.length; i++){
+    var s = STAPLES[i];
+    if (s.indexOf(' ') === -1 && words.indexOf(s) !== -1) return true;
+  }
+  return false;
+}
+function isFreshBuy(ing){ return ing[1] != null && !isStaple(ing[0]); }
 
 function catVoor(naam){
   var n = (naam||'').toLowerCase(), best = null, len = 0;
@@ -985,6 +969,7 @@ function detailHTML(){
   var isFav = S.fav.indexOf(r.id) !== -1;
 
   var missing = r.ingredienten.filter(function(i){ return !cartFind(i[0]); }).length;
+  var freshMissing = r.ingredienten.filter(function(i){ return isFreshBuy(i) && !cartFind(i[0]); }).length;
   var ings = r.ingredienten.map(function(i){
     var on = !!cartFind(i[0]);
     return '<li><button class="ing' + (on ? ' on' : '') + '" data-action="toggle-ing" data-name="' + esc(i[0]) + '" data-hoev="' + esc(hoev(i, f)) + '" aria-pressed="' + on + '">' +
@@ -1019,6 +1004,8 @@ function detailHTML(){
     '<button class="btn-cook" data-action="cook-start" data-id="' + r.id + '">' + icon('pot') + 'Begin met koken</button>' +
     '<button class="btn-wide" data-action="add-all"' + (missing === 0 ? ' disabled' : '') + '>' +
       (missing === 0 ? 'Alles staat al op je lijst' : icon('basket') + 'Zet alles op de boodschappenlijst') + '</button>' +
+    '<button class="btn-wide" data-action="add-fresh"' + (freshMissing === 0 ? ' disabled' : '') + '>' +
+      (freshMissing === 0 ? 'Verse boodschappen staan al op je lijst' : icon('basket') + 'Alleen de verse boodschappen') + '</button>' +
 
     '<h2 class="d-h">Ingredi&euml;nten</h2>' +
     '<p class="d-hint">Tik een ingredi&euml;nt aan om het op je boodschappenlijst te zetten.</p>' +
@@ -1410,6 +1397,18 @@ function handle(action, el){
       });
       persist();
       if (added){ S.tab = 'lijst'; announce(added + ' ingrediënten toegevoegd aan je boodschappenlijst.'); }
+      break;
+    }
+    case 'add-fresh': {
+      var rF = recipeById(S.activeId);
+      if (!rF) break;
+      var fF = curPortions(rF) / rF.porties, addedF = 0;
+      rF.ingredienten.forEach(function(i){
+        if (!isFreshBuy(i)) return;
+        if (!cartFind(i[0])){ addIngredientToCart(i[0], hoev(i, fF), catVoor(i[0])); addedF++; }
+      });
+      persist();
+      if (addedF){ S.tab = 'lijst'; announce(addedF + ' verse ingrediënten toegevoegd aan je boodschappenlijst.'); }
       break;
     }
     case 'cart-toggle':
