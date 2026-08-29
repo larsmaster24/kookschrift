@@ -176,18 +176,6 @@ h1,h2{font-family:var(--f-serif);font-weight:560;font-optical-sizing:auto;text-w
   font-family:var(--f-serif);font-weight:500;font-size:1.32rem;
   color:color-mix(in srgb,var(--ink) 72%,transparent);
 }
-.r-fav{
-  position:absolute;top:11px;right:11px;z-index:3;
-  width:38px;height:38px;border-radius:50%;display:grid;place-items:center;
-  color:#fff;background:rgba(16,11,9,.52);backdrop-filter:blur(4px);
-  box-shadow:0 1px 4px rgba(16,11,9,.28);
-  transition:transform .2s cubic-bezier(.22,1,.36,1);
-}
-.r-fav .ic{width:19px;height:19px}
-.r-fav.on{color:var(--saffron)}
-.r-fav.on .ic{fill:var(--saffron)}
-.r-fav.pop{transform:scale(1.24)}
-
 /* ---------- empty ---------- */
 .empty{
   display:flex;flex-direction:column;align-items:center;gap:12px;
@@ -209,20 +197,7 @@ h1,h2{font-family:var(--f-serif);font-weight:560;font-optical-sizing:auto;text-w
 .d-hero .plate span{font-size:2.9rem}
 .d-name{font-size:clamp(1.55rem,6vw,1.95rem);line-height:1.16}
 .d-meta{margin-top:6px;font-family:var(--f-num);font-size:.78rem;color:var(--ink-soft);font-variant-numeric:tabular-nums}
-.d-fav{
-  position:absolute;top:12px;right:12px;
-  width:40px;height:40px;border-radius:50%;display:grid;place-items:center;
-  background:color-mix(in srgb,var(--paper) 78%,transparent);
-  backdrop-filter:blur(3px);color:var(--ink-soft);
-  transition:transform .2s cubic-bezier(.22,1,.36,1);
-}
-.d-fav .ic{width:20px;height:20px}
-.d-fav.on{color:var(--saffron)}
-.d-fav.on .ic{fill:var(--saffron)}
-.d-fav.pop{transform:scale(1.24)}
 .d-hero.has-photo .plate{display:none}
-.d-herowrap.has-photo .d-fav{background:rgba(16,11,9,.5);color:#fff}
-.d-herowrap.has-photo .d-fav.on{color:var(--saffron)}
 .photo-ctl{
   position:absolute;left:12px;bottom:12px;display:flex;gap:8px;
 }
@@ -802,7 +777,7 @@ var KEY = 'kookschrift-nl-v2';
 var S = {
   tab:'recepten', screen:'list', activeId:null, editingId:null,
   query:'', filter:'Alles', los:'',
-  recepten:SEED.slice(), cart:[], fav:['r1'], portions:{},
+  recepten:SEED.slice(), cart:[], portions:{},
   form:blankForm(),
   cooking:null, step:0, stepDir:'enter', peek:false, finishFlash:false,
   timers:[]
@@ -810,7 +785,7 @@ var S = {
 function blankForm(){ return {naam:'',tijd:'',porties:'',cat:'',ingr:'',stappen:'',notitie:'',foto:''}; }
 
 function persist(){
-  try{ localStorage.setItem(KEY, JSON.stringify({recepten:S.recepten, cart:S.cart, fav:S.fav})); }catch(e){}
+  try{ localStorage.setItem(KEY, JSON.stringify({recepten:S.recepten, cart:S.cart})); }catch(e){}
 }
 (function load(){
   try{
@@ -832,7 +807,6 @@ function persist(){
       S.recepten = merged;
     }
     S.cart = raw.cart || [];
-    S.fav = raw.fav || ['r1'];
   }catch(e){}
 })();
 
@@ -892,7 +866,6 @@ function icon(name){
     check:'<polyline points="4 12 9.5 17.5 20 6.5"/>',
     x:'<line x1="6.5" y1="6.5" x2="17.5" y2="17.5"/><line x1="17.5" y1="6.5" x2="6.5" y2="17.5"/>',
     trash:'<polyline points="4 7 20 7"/><path d="M9 7V5.4A1.4 1.4 0 0 1 10.4 4h3.2A1.4 1.4 0 0 1 15 5.4V7"/><path d="M6.5 7l1 12.3A1.8 1.8 0 0 0 9.3 21h5.4a1.8 1.8 0 0 0 1.8-1.7L17.5 7"/>',
-    heart:'<path d="M12 20s-6.7-4.3-9.2-8.4C1.1 8.4 2.7 5 6 5c2 0 3.4 1.3 4 2.5C10.7 6.3 12 5 14 5c3.4 0 4.9 3.4 3.2 6.6C18.7 15.7 12 20 12 20z"/>',
     timer:'<line x1="9.5" y1="3.2" x2="14.5" y2="3.2"/><line x1="12" y1="3.2" x2="12" y2="6"/><circle cx="12" cy="13.6" r="7.7"/><line x1="12" y1="13.6" x2="12" y2="9.2"/>',
     pot:'<path d="M5 9.6h14V16a3 3 0 0 1-3 3H8a3 3 0 0 1-3-3z"/><line x1="3" y1="9.6" x2="21" y2="9.6"/><line x1="19" y1="11.6" x2="22.4" y2="11.6"/><line x1="1.6" y1="11.6" x2="5" y2="11.6"/><path d="M9 9.6C9 7.6 9.8 6 12 6s3 1.6 3 3.6"/>',
     pencil:'<path d="M4 20h4L18.4 9.6l-4-4L4 16z"/><line x1="13.4" y1="6.6" x2="17.4" y2="10.6"/>',
@@ -924,8 +897,7 @@ function visibleRecipes(){
     return r.naam.toLowerCase().indexOf(q) !== -1 ||
       r.ingredienten.some(function(i){ return i[0].toLowerCase().indexOf(q) !== -1; });
   });
-  if (S.filter === 'Favorieten') list = list.filter(function(r){ return S.fav.indexOf(r.id) !== -1; });
-  else if (S.filter === 'Snel') list = list.filter(function(r){ return r.tijd <= 25; });
+  if (S.filter === 'Snel') list = list.filter(function(r){ return r.tijd <= 25; });
   else if (S.filter !== 'Alles') list = list.filter(function(r){ return r.categorie === S.filter; });
   return list;
 }
@@ -952,7 +924,7 @@ function headHTML(){
 }
 
 function listHTML(){
-  var chipsSet = ['Alles','Favorieten'];
+  var chipsSet = ['Alles'];
   if (S.recepten.some(function(r){ return r.tijd <= 25; })) chipsSet.push('Snel');
   S.recepten.forEach(function(r){ if (chipsSet.indexOf(r.categorie) === -1) chipsSet.push(r.categorie); });
   if (chipsSet.indexOf(S.filter) === -1) S.filter = 'Alles';
@@ -962,7 +934,6 @@ function listHTML(){
 
   var list = visibleRecipes();
   var rows = list.map(function(r){
-    var isFav = S.fav.indexOf(r.id) !== -1;
     var onList = r.ingredienten.filter(function(i){ return cartFind(i[0]); }).length;
     return '<div class="r-item">' +
       '<div class="r-banner"' +
@@ -975,7 +946,6 @@ function listHTML(){
         (onList ? '<span class="r-flag">' + icon('basket') + onList + ' op je lijst</span>' : '') +
       '</div>' +
       '<button class="r-open" data-action="open-recipe" data-id="' + r.id + '" aria-label="Open ' + esc(r.naam) + '"></button>' +
-      '<button class="r-fav' + (isFav ? ' on' : '') + '" data-action="fav" data-id="' + r.id + '" aria-pressed="' + isFav + '" aria-label="' + (isFav ? 'Uit favorieten halen' : 'Bij favorieten zetten') + '">' + icon('heart') + '</button>' +
     '</div>';
   }).join('');
 
@@ -992,7 +962,6 @@ function detailHTML(){
   var r = recipeById(S.activeId);
   if (!r) { S.screen = 'list'; return listHTML(); }
   var cp = curPortions(r), f = cp / r.porties;
-  var isFav = S.fav.indexOf(r.id) !== -1;
 
   var missing = r.ingredienten.filter(function(i){ return !cartFind(i[0]); }).length;
   var freshMissing = r.ingredienten.filter(function(i){ return isFreshBuy(i) && !cartFind(i[0]); }).length;
@@ -1012,7 +981,6 @@ function detailHTML(){
   return '<div class="detail">' +
     '<div class="d-herowrap' + (r.foto ? ' has-photo' : '') + '">' +
       '<div class="d-hero' + (r.foto ? ' has-photo' : '') + '" style="' + (r.foto ? 'background-image:url(\'' + esc(r.foto) + '\')' : '--tint:' + tint(r.categorie)) + '">' + plate(r.naam.charAt(0), 'transparent', true) + '</div>' +
-      '<button class="d-fav' + (isFav ? ' on' : '') + '" data-action="fav" data-id="' + r.id + '" aria-pressed="' + isFav + '" aria-label="' + (isFav ? 'Uit favorieten halen' : 'Bij favorieten zetten') + '">' + icon('heart') + '</button>' +
       (r.foto
         ? '<div class="photo-ctl"><button data-action="pick-photo" data-id="' + r.id + '">' + icon('image') + 'Wijzigen</button>' +
           '<button data-action="remove-photo" data-id="' + r.id + '" aria-label="Foto verwijderen">' + icon('x') + '</button></div>'
@@ -1390,15 +1358,6 @@ function handle(action, el){
         persist();
       }
       break;
-    case 'fav': {
-      var k = S.fav.indexOf(id);
-      if (k === -1) S.fav.push(id); else S.fav.splice(k, 1);
-      persist();
-      render();
-      var b = document.querySelector('[data-action="fav"][data-id="' + id + '"]');
-      if (b){ b.classList.add('pop'); setTimeout(function(){ b.classList.remove('pop'); }, 200); }
-      return;
-    }
     case 'portion-inc':
     case 'portion-dec': {
       var rp = recipeById(S.activeId);
